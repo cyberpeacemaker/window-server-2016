@@ -1,0 +1,73 @@
+
+Task 1: Configure an ISATAP router
+
+Dnscmd /config /GlobalQueryBlockList wpad
+Set-NetIsatapConfiguration -Router 172.16.0.1
+Get-NetIPAddress | Format-Table InterfaceAlias,InterfaceIndex,IPv6Address
+Get-NetIPAddress | Format-Table InterfaceAlias,InterfaceIndex,IPv6Address > C:\Results.txt
+Get-NetIPInterface -InterfaceIndex 15 -PolicyStore ActiveStore | Format-List
+Set-NetIPInterface -InterfaceIndex 15 -Advertising Enabled
+New-NetRoute -InterfaceIndex 15 -DestinationPrefix fd00::/64 -Publish Yes
+Get-NetIPAddress -InterfaceIndex 15
+
+
+Task 2: Verify the ISATAP configuration on the client
+
+Get-NetIPAddress | Format-Table IPAddress,InterfaceAlias
+Get-NetIPAddress | Format-Table IPAddress,InterfaceAlias
+
+
+Task 3: Verify network connectivity to other subnets
+
+Test-NetConnection fd00::XXXX:XXXX:XXXX:XXXX
+
+
+Task 1: Configure native IPv6 connectivity
+
+Set-NetIPInterface -InterfaceIndex 15 -Advertising Disabled
+Remove-NetRoute -InterfaceIndex 15 -Publish Yes
+Restart-Service iphlpsvc
+
+Set-NetIPInterface -AddressFamily ipv6 -InterfaceAlias "London_Network" -Advertising Enabled -AdvertiseDefaultRoute Enabled
+Set-NetIPInterface -AddressFamily ipv6 -InterfaceAlias "NA_WAN" -Advertising Enabled -AdvertiseDefaultRoute Enabled
+New-NetRoute -InterfaceAlias "London_Network" -DestinationPrefix fd00::/64 -Publish Yes
+New-NetRoute -InterfaceAlias "NA_WAN" -DestinationPrefix fd00:1::/64 -Publish Yes
+Get-NetIPAddress | Format-Table IPAddress,InterfaceAlias
+
+
+
+Task 2: Verify the native IPv6 configuration
+
+Get-NetIPAddress | Format-Table IPAddress,InterfaceAlias
+ipconfig
+
+
+Task 3: Verify network connectivity to other subnets
+
+ipconfig /flushdns
+Ping LON-DC1 -6
+http://LON-SVR1.adatum.com
+ipconfig /flushdns
+Ping EU-RTR -6
+Ping TOR-SVR1 -6
+
+
+Task 1: Configure 6to4 connectivity
+
+Set-Net6to4Configuration -State Enabled
+Set-NetIPInterface -InterfaceAlias "6to4_Adapter" -Forwarding Enabled
+Set-NetIPInterface -InterfaceAlias "London_Network" -Forwarding Enabled
+
+Task 2: Verify 6to4 configuration
+
+Get-NetIPAddress | Format-Table IPAddress,Interfacealias
+Set-Net6to4Configuration -State Enabled
+Get-NetIPAddress | Format-Table IPAddress,InterfaceAlias
+ipconfig
+Get-NetIPAddress | Format-Table IPAddress,InterfaceAlias
+Get-NetIPAddress | Format-Table IPAddress,InterfaceAlias
+
+Test-NetConnection fd00::10
+
+
+
