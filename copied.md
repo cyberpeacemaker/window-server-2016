@@ -1,88 +1,250 @@
-這段後記已經非常有溫度、誠懇且完整了，既點出了過程中的人際感謝，也誠實地反思了整個寫作歷程與工具資源。如果你希望我幫忙潤飾、整理語氣，或者加強條理性，這裡有一個精修過後的版本，保留原意、語氣不過度商業化，讓閱讀體驗更順暢：
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Show Images from 10.0.1.41</title>
+  <style>
+    /* .img-card:hover {
+      box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+      background: #2465c5;
+      transform: scale(1.02);
+      transform-origin: center;
+      transition: box-shadow 0.25s, background 0.2s, transform 0.2s;
+      max-width: none;
+    } */
+    .img-card {
+      transition: box-shadow 0.2s, background 0.2s;
+      margin-bottom: 24px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      max-width: 840px; 
+      align-items: center;
+    } 
+    input[type="text"] {
+      padding: 1px 8px;
+      font-size: 16px;
+      border: 2px solid #ccc;
+      border-radius: 4px;
+      margin: 2px 0;
+      width: 40px;
+      transition: border-color 0.3s ease;
+    }
 
----
+    input[type="text"]:focus {
+      border-color: #007BFF;
+      outline: none;
+    }
 
-# 【31】資通安全的原罪 - 後記
+    label {
+      display: inline-block;
+      margin-top: 10px;
+      font-weight: bold;
+      color: #333;
+    }
 
-## 致謝
+  </style>
+</head>
+<body>
+  <header id="top-header" style="position:fixed; top:0; left:0; right:0; height:64px; background:#a1e0db; box-shadow:0 2px 8px rgba(138, 112, 112, 0.08); z-index:10000; display:flex; align-items:center; padding:0 16px;">
+    <h1 style="margin:0; font-size:1.25rem;">Images from 10.0.1.41</h1>
+    <form id="imageForm" style="margin-bottom:12px;"></form>
+      <label for="prefix">Prefix:</label>
+      <input type="text" id="prefix" name="prefix" value="LAB" required>
 
-感謝所有讀到這裡的讀者。如果你對這個系列還有興趣，完整內容都整理在 [GitHub 專案](https://github.com/cyberpeacemaker/ithome30-sin-of-cyber-security) 中，主要包含兩個補充檔案：
+      <label for="chap-index" style="margin-left:8px;">Chapter Index:</label>
+      <input type="text" id="chap-index" name="chap-index" value="04" pattern="\\d{2}" required>
 
-1. [`todo.md`](https://github.com/cyberpeacemaker/ithome30-sin-of-cyber-security/blob/main/todo.md)
+      <label for="start-index" style="margin-left:8px;">Image Index:</label>
+      <input type="text" id="start-index" name="start-index" value="73" pattern="\\d{2}" required>
 
-   * 記錄我想補充或修改的部分。
-2. [`unused.md`](https://github.com/cyberpeacemaker/ithome30-sin-of-cyber-security/blob/main/unused.md)
+      <button id="load-images-btn" type="button">Load Images</button>
+    </form>
+    <p style="flex:1; margin:0; text-align:center;">Starting Filename: <span id="filename">LAB01-25.png</span></p>
+    <a href="#" id="back-to-top" title="Back to top" aria-label="Back to top"
+      style="text-decoration:none; color:#333; display:inline-flex; align-items:center; padding:8px; border-radius:6px;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+       <polyline points="6 15 12 9 18 15"></polyline>
+      </svg>
+    </a>
+    <script>
+      document.getElementById('back-to-top').addEventListener('click', function(e){
+        e.preventDefault();
+        const duration = 600; // transition time in ms
+        const start = window.scrollY || window.pageYOffset;
+        const startTime = performance.now();
+        const target = 0;
+        const distance = target - start;
+        const easeInOutCubic = t => t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
+        function step(now) {
+          const elapsed = now - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          const eased = easeInOutCubic(progress);
+          window.scrollTo(0, Math.round(start + distance * eased));
+          if (elapsed < duration) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+      });
+    </script></a>
+  </header>
 
-   * 收錄了一些暫時找不到合適位置的想法與點子。
+  <main style="margin-top:80px; padding:16px;">
 
-特別感謝這段時間中，曾給予我幫助與支持的每一位：
 
-* 提供資安諮詢與協助的民間駭客、資安處長、業界先進、數位鑑識人員；
-* 曾收留我工作的便利商店、保全、麵包店、飯店，以及照顧我的同事；
-* 願意配合我各種無理要求的理專、社區管委、房仲、恆逸課程專員；
-* 提供優質學習空間的清華大學與清大圖書館；
 
-還有我最親愛的父母、家人與朋友們。謝謝你們。
+    <div id="image-container">Loading...</div>
+  </main>
 
----
 
-## 資源分享
+<script>  
+  const container = document.getElementById('image-container');
+  container.innerHTML = '';
+  let chapIndex = document.getElementById('chap-index').value;
+  let chapName = `LAB${chapIndex}`;
+  let startIndex = parseInt(document.getElementById('start-index').value, 10) || 0;  
+  document.getElementById('load-images-btn').addEventListener('click', function() {
+    container.innerHTML = '';
+    startIndex = parseInt(document.getElementById('start-index').value, 10) || 0;
+    tryLoadNextImage(startIndex);
+  });
+  function pad(num, length = 2) {
+    return num.toString().padStart(length, '0');
+  }
+  function createImageCard(filename, url) {
+    const card = document.createElement('div');
+    const easeInOutCubic = t =>
+      t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
-這次參加鐵人賽挑戰的過程中，也接觸到不少優秀的資源與工具，這邊分享給有興趣的你：
+function smoothScale(element, targetScale = 1.2, duration = 500) {
+  const startTime = performance.now();
 
-### 資源與知識庫
+  // ✅ Read current scale from transform (default to 1)
+  const currentTransform = getComputedStyle(element).transform;
+  let startScale = 1;
+  if (currentTransform !== 'none') {
+    const match = currentTransform.match(/matrix\(([^,]+),[^,]+,[^,]+,[^,]+,[^,]+,[^,]+\)/);
+    if (match) startScale = parseFloat(match[1]);
+  }
 
-* [GitHub - awesome-threat-intelligence](https://github.com/hslatman/awesome-threat-intelligence)
-* [GitHub - awesome-threat-detection](https://github.com/0x4D31/awesome-threat-detection)
-* OSINT（開放式情報收集）
-* OWASP
-* MITRE ATT&CK
-* 資通安全研究院
-* iThome 技術網站
+  const scaleDiff = targetScale - startScale;
 
-### 工具
+  function step(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = easeInOutCubic(progress);
+    const currentScale = startScale + scaleDiff * eased;
+    element.style.transformOrigin = 'top left';
+    element.style.transform = `scale(${currentScale})`;
 
-* Obsidian（筆記與知識管理）
-* Heptabase（視覺化筆記工具）
-* Mermaid（流程圖與圖表繪製）
+    if (elapsed < duration) requestAnimationFrame(step);
+  }
 
----
+  requestAnimationFrame(step);
+}
+    card.addEventListener('mouseenter', () => smoothScale(card, 1.6, 400));
+    card.addEventListener('mouseleave', () => smoothScale(card, 1, 400));
+    card.className = 'img-card';
 
-## 個人心得
+    const title = document.createElement('div');
+    title.textContent = filename;
+    title.style.fontWeight = 'bold';
+    title.style.marginBottom = '8px';
+    title.style.fontSize = '1.4em';
 
-### 關於圖書館的閱讀體會
+    const img = document.createElement('img');
+    img.src = url;
+    img.alt = filename;
+    img.style.display = 'block';
+    img.style.width = '100%';
+    img.style.borderRadius = '4px';
 
-**優點：**
+    card.appendChild(title);
+    card.appendChild(img);
 
-* 可獲得通用且紮實的基礎概念
-* 有機會接觸到大師的理論與思維框架
+    card.style.cursor = 'pointer';
+    card.addEventListener('click', function() {
+      const modalBg = document.createElement('div');
+      modalBg.style.position = 'fixed';
+      modalBg.style.top = '0';
+      modalBg.style.left = '0';
+      modalBg.style.width = '100vw';
+      modalBg.style.height = '100vh';
+      modalBg.style.background = 'rgba(0,0,0,0.7)';
+      modalBg.style.display = 'flex';
+      modalBg.style.alignItems = 'center';
+      modalBg.style.justifyContent = 'center';
+      modalBg.style.zIndex = '9999';
 
-**限制：**
+      const modalImg = document.createElement('img');
+      modalImg.src = url;
+      modalImg.alt = filename;
+      modalImg.style.maxWidth = '90vw';
+      modalImg.style.maxHeight = '90vh';
+      modalImg.style.boxShadow = '0 4px 32px rgba(0,0,0,0.5)';
+      modalImg.style.background = '#fff';
+      modalImg.style.borderRadius = '8px';
 
-* 技術更新迅速，部分內容可能已過時
-* 缺乏對最新手法的即時掌握
+      modalBg.addEventListener('click', function(e) {
+      if (e.target === modalBg) {
+        document.body.removeChild(modalBg);
+      }
+      });
 
-### 鐵人賽寫書嘗試
+      modalBg.appendChild(modalImg);
+      document.body.appendChild(modalBg);
+    });    
 
-**收穫：**
+    return card;
+  }
+  
+  function tryLoadNextImage(index) {    
+    const padNum = pad(index, index > 100 ? 3 : 2);
+    const url = `http://10.0.1.41/${chapName}-${padNum}.PNG`;
+    console.log(url);
+    isImageUrlValid(url, function(isValid) {
+      if (isValid) {
+        const card = createImageCard(`${chapName}-${padNum}.PNG`, url);
+        container.appendChild(card);
+        // Add a divider line after the card
+        const divider = document.createElement('hr');
+        divider.style.width = '100%';
+        divider.style.margin = '24px 0';
+        container.appendChild(divider);        
+        tryLoadNextImage(index + 1);
+      }
+    });
+  }
+  
+  function isImageUrlValid(url, callback) {
+    const img = new Image();
 
-* 整理了現階段的想法與脈絡
-* 複習基本知識
-* 嘗試將所觀察的「重要性」與「趨勢局勢」留下紀錄、分享給更多人
-* 嘗試原創兩個主題：「原罪」與「未來」
+    img.onload = function() {
+      callback(true);
+    };
 
-**反思：**
+    img.onerror = function() {
+      callback(false);
+    };
 
-* 自覺知識還不夠紮實，內容難免有所不足
-* 雖然投入不少時間，也許這段時間本可以用於其他事物
-* 若等知識更完整後再寫，成品質量或許會更高，但對我而言，**現在寫這本書，就是最好的一刻。**
+    img.src = url;
+  }
 
----
+  const form = document.getElementById('imageForm');
+  const filenameDisplay = document.getElementById('filename');
 
-如果你有任何想法、建議或回饋，也非常歡迎透過 GitHub 或其他方式與我聯繫。
+  form.addEventListener('input', () => {
+    const prefix = form.prefix.value;
+    const chapter = form.chapter.value.padStart(2, '0');
+    const image = form.image.value.padStart(2, '0');
 
-再次感謝你的閱讀與陪伴。
+    // TODO: Uniform chapter index padding / format
+    filenameDisplay.textContent = `${prefix}${chapter}-${image}.png`;
+  });
 
----
+  tryLoadNextImage(startIndex);
+</script>
 
-需要我幫忙轉成 Markdown 檔案、發佈用格式，或加上目錄等功能，也可以告訴我。
+</body>
+</html> 

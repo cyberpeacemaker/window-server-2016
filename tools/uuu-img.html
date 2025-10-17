@@ -61,13 +61,14 @@
       max-width: 840px;
       align-items: center;
       cursor: pointer;
-      transition: transform 0.3s, box-shadow 0.3s;
+      transform-origin: top left;
+      /* transition: transform 0.3s, box-shadow 0.3s; */
     }
 
-    .img-card:hover {
+    /* .img-card:hover {
       transform: scale(1.05);
       box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-    }
+    } */
 
     img {
       width: 100%;
@@ -105,12 +106,15 @@
     <form id="imageForm">
       <label>Prefix:<input type="text" id="prefix" value="LAB" required></label>
       <label>Chapter Index:<input type="text" id="chap-index" value="04" pattern="\d{2}" required></label>
-      <label>Image Index:<input type="text" id="start-index" value="73" pattern="\d{2}" required></label>
+      <label>Image Index:<input type="text" id="start-index" value="0" pattern="\d{2}" required></label>
       <button type="button" id="load-images-btn">Load Images</button>
     </form>
     <span>Starting Filename: <span id="filename">LAB01-25.png</span></span>
     <a href="#" id="back-to-top" title="Back to top">
-      ↑
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="6 15 12 9 18 15"></polyline>
+      </svg>
     </a>
   </header>
 
@@ -127,11 +131,25 @@
     const startInput = document.getElementById('start-index');
 
     // Smooth scroll to top
-    document.getElementById('back-to-top').addEventListener('click', e => {
+    document.getElementById('back-to-top').addEventListener('click', function (e) {
       e.preventDefault();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      const duration = 600; // transition time in ms
+      const start = window.scrollY || window.pageYOffset;
+      const startTime = performance.now();
+      const target = 0;
+      const distance = target - start;
+      const easeInOutCubic = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      function step(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = easeInOutCubic(progress);
+        window.scrollTo(0, Math.round(start + distance * eased));
+        if (elapsed < duration) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
     });
 
+    //TODO: Pad function length parameter
     function pad(num, length = 2) { return String(num).padStart(length, '0'); }
 
     function createImageCard(filename, url) {
@@ -161,6 +179,42 @@
         modalBg.appendChild(modalImg);
         document.body.appendChild(modalBg);
       });
+
+      // TODO: something off with scaling animation
+      // const easeInOutCubic = t => 1 - Math.pow(1 - t, 3);
+      const easeInOutCubic = t => t < 0.5
+                                    ? 4 * t * t * t
+                                    : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+      function smoothScale(element, targetScale = 1.2, duration = 500) {
+        const startTime = performance.now();
+        
+        // ✅ Read current scale from transform (default to 1)
+        const currentTransform = getComputedStyle(element).transform;
+        let startScale = 1;
+        if (currentTransform !== 'none') {
+          const match = currentTransform.match(/matrix\(([^,]+),[^,]+,[^,]+,[^,]+,[^,]+,[^,]+\)/);
+          if (match) startScale = parseFloat(match[1]);
+        }
+
+        const scaleDiff = targetScale - startScale;
+
+        function step(now) {
+          const elapsed = now - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          const eased = easeInOutCubic(progress);
+          const currentScale = startScale + scaleDiff * eased;
+          element.style.transform = `scale(${currentScale})`;
+
+          if (elapsed < duration) requestAnimationFrame(step);
+        }
+
+        requestAnimationFrame(step);
+      }
+
+      card.addEventListener('mouseenter', () => smoothScale(card, 1.2, 400));
+      card.addEventListener('mouseleave', () => smoothScale(card, 1, 400));
+
 
       return card;
     }

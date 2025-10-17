@@ -1,4 +1,5 @@
-﻿# Define VM groups
+﻿# TODO: goodStatus determination based on different method.
+# Define VM groups
 $initialVMs = @("20741B-LON-DC1")
 $midVMs = @("20741B-NA-RTR", "20741B-EU-RTR")
 $finalVMs = @(
