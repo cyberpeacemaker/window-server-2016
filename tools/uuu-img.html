@@ -65,11 +65,6 @@
       transition: transform 0.3s, box-shadow 0.3s;
     }
 
-    /* .img-card:hover {
-      transform: scale(1.05);
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-    } */
-
     img {
       width: 100%;
       border-radius: 4px;
@@ -133,7 +128,7 @@
     // Smooth scroll to top
     document.getElementById('back-to-top').addEventListener('click', function (e) {
       e.preventDefault();
-      const duration = 600; // transition time in ms
+      const duration = 600; 
       const start = window.scrollY || window.pageYOffset;
       const startTime = performance.now();
       const target = 0;
@@ -180,43 +175,48 @@
         document.body.appendChild(modalBg);
       });
 
-      // TODO: something off with scaling animation
-      // const easeInOutCubic = t => 1 - Math.pow(1 - t, 3);
-      // const easeInOutCubic = t => t < 0.5
-      //                               ? 4 * t * t * t
-      //                               : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      function smoothScale(card, img, direction='in') {
+  // If you're scaling it in or out, avoid doing it multiple times
+  // if (element._scaling) return;
 
-      function smoothScale(element, targetScale = 1.2, duration = 500) {
-        element.style.transform = `scale(${targetScale})`;
-        console.log('scaling to', targetScale);
-        // const startTime = performance.now();
-        
-        // // ✅ Read current scale from transform (default to 1)
-        // const currentTransform = getComputedStyle(element).transform;
-        // let startScale = 1;
-        // if (currentTransform !== 'none') {
-        //   const match = currentTransform.match(/matrix\(([^,]+),[^,]+,[^,]+,[^,]+,[^,]+,[^,]+\)/);
-        //   if (match) startScale = parseFloat(match[1]);
-        // }
+  // Get the current scale, defaulting to 1 if not set
+  const currentScale = card._currentScale || 1;
 
-        // const scaleDiff = targetScale - startScale;
+  // Calculate the scale factor to fill the window
+  const windowWidth = window.innerWidth;
+  const windowHeight = window.innerHeight;
 
-        // function step(now) {
-        //   const elapsed = now - startTime;
-        //   const progress = Math.min(elapsed / duration, 1);
-        //   const eased = easeInOutCubic(progress);
-        //   const currentScale = startScale + scaleDiff * eased;
-        //   element.style.transform = `scale(${currentScale})`;
+  const cardWidth = card.offsetWidth;
+  const cardHeight = card.offsetHeight;
 
-        //   if (elapsed < duration) requestAnimationFrame(step);
-        // }
+  let scaleX = windowWidth / cardWidth;
+  let scaleY = windowHeight / cardHeight;
 
-        // requestAnimationFrame(step);
+  // If scaling 'in', we want to reduce the size, so set targetScale accordingly
+  let targetScale = direction === 'out' ? 1 : Math.max(scaleX, scaleY);
+
+  // Apply the calculated scaling
+  card.style.transform = `scale(${targetScale})`;
+
+  // Optionally, set the transition for smooth scaling
+  card.style.transition = 'transform 0.3s ease';
+
+  // Update the current scale property on the card for future reference
+  card._currentScale = targetScale;
+  
+  // For debugging, you can log the scale values
+  // console.log('Scaling to:', targetScale);
       }
 
-      card.addEventListener('mouseenter', () => smoothScale(card, 1.2, 400));
-      card.addEventListener('mouseleave', () => smoothScale(card, 1, 400));
+      const currentTransform = getComputedStyle(card).transform;
+      let startScale = 1;
+      if (currentTransform !== 'none') {
+        const match = currentTransform.match(/matrix\(([^,]+),[^,]+,[^,]+,[^,]+,[^,]+,[^,]+\)/);
+        if (match) startScale = parseFloat(match[1]);
+      }
 
+      card.addEventListener('mouseenter', () => smoothScale(card, img, 'in'));
+      card.addEventListener('mouseleave', () => smoothScale(card, img, 'out'));
 
       return card;
     }
