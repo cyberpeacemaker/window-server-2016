@@ -1,146 +1,211 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>Show Images from 10.0.1.41</title>
   <style>
-    .img-card:hover {
-      box-shadow: 0 4px 16px rgba(0,0,0,0.18);
-      background: #2465c5;
-      transform: scale(1.02);
-      transform-origin: center;
-      transition: box-shadow 0.25s, background 0.2s, transform 0.2s;
-      max-width: none;
+    body {
+      font-family: sans-serif;
+      margin: 0;
     }
+
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 64px;
+      background: #a1e0db;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      box-shadow: 0 2px 8px rgba(138, 112, 112, 0.08);
+      z-index: 10000;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.25rem;
+      flex: 1;
+      text-align: center;
+    }
+
+    form {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    input[type="text"] {
+      padding: 1px 8px;
+      font-size: 16px;
+      border: 2px solid #ccc;
+      border-radius: 4px;
+      width: 50px;
+      transition: border-color 0.3s;
+    }
+
+    input[type="text"]:focus {
+      border-color: #007BFF;
+      outline: none;
+    }
+
     .img-card {
-      transition: box-shadow 0.2s, background 0.2s;
       margin-bottom: 24px;
       border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
       padding: 16px;
       display: flex;
       flex-direction: column;
-      max-width: 840px; 
+      max-width: 840px;
       align-items: center;
-    } 
+      cursor: pointer;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .img-card:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    img {
+      width: 100%;
+      border-radius: 4px;
+      display: block;
+    }
+
+    hr {
+      width: 100%;
+      margin: 24px 0;
+      border: none;
+      border-top: 1px solid #ccc;
+    }
+
+    main {
+      margin-top: 80px;
+      padding: 16px;
+    }
+
+    #back-to-top {
+      text-decoration: none;
+      color: #333;
+      padding: 8px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+    }
   </style>
 </head>
+
 <body>
-  <label for="chap-index">Chapter Index:</label>
-  <input type="text" id="chap-index" value="03" style="width:64px; margin-right:8px;">
-  <label for="start-index">Start Index:</label>
-  <input type="number" id="start-index" value="10" min="0" style="margin-right:8px;">
-  <button id="load-images-btn">Load Images</button>
+
+  <header>
+    <h1>Images from 10.0.1.41</h1>
+    <form id="imageForm">
+      <label>Prefix:<input type="text" id="prefix" value="LAB" required></label>
+      <label>Chapter Index:<input type="text" id="chap-index" value="04" pattern="\d{2}" required></label>
+      <label>Image Index:<input type="text" id="start-index" value="73" pattern="\d{2}" required></label>
+      <button type="button" id="load-images-btn">Load Images</button>
+    </form>
+    <span>Starting Filename: <span id="filename">LAB01-25.png</span></span>
+    <a href="#" id="back-to-top" title="Back to top">
+      ↑
+    </a>
+  </header>
+
+  <main>
+    <div id="image-container">Loading...</div>
+  </main>
+
   <script>
+    const container = document.getElementById('image-container');
+    const loadBtn = document.getElementById('load-images-btn');
+    const filenameDisplay = document.getElementById('filename');
+    const prefixInput = document.getElementById('prefix');
+    const chapInput = document.getElementById('chap-index');
+    const startInput = document.getElementById('start-index');
 
-  </script>
-  <h1>Images from 10.0.1.41</h1>
-  <div id="image-container">Loading...</div>
+    // Smooth scroll to top
+    document.getElementById('back-to-top').addEventListener('click', e => {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
 
+    function pad(num, length = 2) { return String(num).padStart(length, '0'); }
 
-<script>  
-  const container = document.getElementById('image-container');
-  container.innerHTML = '';
-  let chapIndex = document.getElementById('chap-index').value;
-  let chapName = `LAB${chapIndex}`;
-  let startIndex = parseInt(document.getElementById('start-index').value, 10) || 0;  
-  document.getElementById('load-images-btn').addEventListener('click', function() {
-    container.innerHTML = '';
-    startIndex = parseInt(document.getElementById('start-index').value, 10) || 0;
-    tryLoadNextImage(startIndex);
-  });
-  function pad(num, length = 2) {
-    return num.toString().padStart(length, '0');
-  }
-  function createImageCard(filename, url) {
-    const card = document.createElement('div');
-    card.className = 'img-card';
+    function createImageCard(filename, url) {
+      const card = document.createElement('div');
+      card.className = 'img-card';
 
-    const title = document.createElement('div');
-    title.textContent = filename;
-    title.style.fontWeight = 'bold';
-    title.style.marginBottom = '8px';
-    title.style.fontSize = '1.4em';
+      const title = document.createElement('div');
+      title.textContent = filename;
+      title.style.fontWeight = 'bold';
+      title.style.marginBottom = '8px';
+      card.appendChild(title);
 
-    const img = document.createElement('img');
-    img.src = url;
-    img.alt = filename;
-    img.style.display = 'block';
-    img.style.width = '100%';
-    img.style.borderRadius = '4px';
+      const img = document.createElement('img');
+      img.src = url;
+      img.alt = filename;
+      card.appendChild(img);
 
-    card.appendChild(title);
-    card.appendChild(img);
-
-    card.style.cursor = 'pointer';
-    card.addEventListener('click', function() {
-      const modalBg = document.createElement('div');
-      modalBg.style.position = 'fixed';
-      modalBg.style.top = '0';
-      modalBg.style.left = '0';
-      modalBg.style.width = '100vw';
-      modalBg.style.height = '100vh';
-      modalBg.style.background = 'rgba(0,0,0,0.7)';
-      modalBg.style.display = 'flex';
-      modalBg.style.alignItems = 'center';
-      modalBg.style.justifyContent = 'center';
-      modalBg.style.zIndex = '9999';
-
-      const modalImg = document.createElement('img');
-      modalImg.src = url;
-      modalImg.alt = filename;
-      modalImg.style.maxWidth = '90vw';
-      modalImg.style.maxHeight = '90vh';
-      modalImg.style.boxShadow = '0 4px 32px rgba(0,0,0,0.5)';
-      modalImg.style.background = '#fff';
-      modalImg.style.borderRadius = '8px';
-
-      modalBg.addEventListener('click', function(e) {
-      if (e.target === modalBg) {
-        document.body.removeChild(modalBg);
-      }
+      // Modal on click
+      card.addEventListener('click', () => {
+        const modalBg = document.createElement('div');
+        modalBg.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:9999;';
+        const modalImg = document.createElement('img');
+        modalImg.src = url;
+        modalImg.alt = filename;
+        modalImg.style.cssText = 'max-width:90vw;max-height:90vh;border-radius:8px;box-shadow:0 4px 32px rgba(0,0,0,0.5);background:#fff;';
+        modalBg.addEventListener('click', e => { if (e.target === modalBg) modalBg.remove(); });
+        modalBg.appendChild(modalImg);
+        document.body.appendChild(modalBg);
       });
 
-      modalBg.appendChild(modalImg);
-      document.body.appendChild(modalBg);
-    });    
+      return card;
+    }
 
-    return card;
-  }
-  
-  function tryLoadNextImage(index) {    
-    const padNum = pad(index, index > 100 ? 3 : 2);
-    const url = `http://10.0.1.41/${chapName}-${padNum}.PNG`;
-    console.log(url);
-    isImageUrlValid(url, function(isValid) {
-      if (isValid) {
-        const card = createImageCard(`${chapName}-${padNum}.PNG`, url);
-        container.appendChild(card);
-        // Add a divider line after the card
-        const divider = document.createElement('hr');
-        divider.style.width = '100%';
-        divider.style.margin = '24px 0';
-        container.appendChild(divider);        
-        tryLoadNextImage(index + 1);
+    async function isImageValid(url) {
+      return new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => resolve(true);
+        img.onerror = () => resolve(false);
+        img.src = url;
+      });
+    }
+
+    async function loadImages() {
+      container.innerHTML = '';
+      const prefix = prefixInput.value;
+      const chapter = pad(chapInput.value);
+      let index = parseInt(startInput.value, 10) || 0;
+
+      while (true) {
+        const filename = `${prefix}${chapter}-${pad(index)}.PNG`;
+        // const url = `http://10.0.1.41/${filename}`;
+        const url = `http://127.0.0.1:3000/tools/LAB04/${filename}`;
+        const valid = await isImageValid(url);
+        if (!valid) break;
+
+        container.appendChild(createImageCard(filename, url));
+        container.appendChild(document.createElement('hr'));
+        index++;
       }
+    }
+
+    loadBtn.addEventListener('click', loadImages);
+
+    // Update filename display
+    [prefixInput, chapInput, startInput].forEach(input => {
+      input.addEventListener('input', () => {
+        filenameDisplay.textContent = `${prefixInput.value}${pad(chapInput.value)}-${pad(startInput.value)}.png`;
+      });
     });
-  }
-  
-  function isImageUrlValid(url, callback) {
-    const img = new Image();
 
-    img.onload = function() {
-      callback(true);
-    };
-
-    img.onerror = function() {
-      callback(false);
-    };
-
-    img.src = url;
-  }
-  tryLoadNextImage(startIndex);
-</script>
+    // Initial load
+    loadImages();
+  </script>
 
 </body>
+
 </html>
